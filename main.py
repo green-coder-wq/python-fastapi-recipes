@@ -1,7 +1,7 @@
 from typing import AsyncGenerator, List
 
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy import CursorResult, select, update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import models
@@ -65,19 +65,19 @@ async def get_recipe(
     recipe_id: int,
     session: AsyncSession = Depends(get_session),
 ) -> models.Recipe:
-    result: CursorResult = await session.execute(
+    update_result = await session.execute(
         update(models.Recipe)
         .where(models.Recipe.id == recipe_id)
         .values(views=models.Recipe.views + 1)
     )
-    if result.rowcount == 0:
+    if update_result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Рецепт не найден")
     await session.commit()
 
-    result = await session.execute(
+    select_result = await session.execute(
         select(models.Recipe).where(models.Recipe.id == recipe_id)
     )
-    return result.scalar_one()
+    return select_result.scalar_one()
 
 
 @app.post(
