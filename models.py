@@ -31,3 +31,4 @@ class Ingredient(Base):
     unit = Column(String, nullable=False)
 
     recipe = relationship('Recipe', back_populates='ingredients')
+    
