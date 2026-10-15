@@ -24,9 +24,7 @@ async def test_session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    session_maker = sessionmaker(
-        engine, expire_on_commit=False, class_=AsyncSession
-    )
+    session_maker = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     async with session_maker() as session:
         yield session
 
