@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 from database import Base
 from main import app, get_session
 
-
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
