@@ -5,7 +5,7 @@ from database import Base
 
 
 class Recipe(Base):
-    __tablename__ = 'recipes'
+    __tablename__ = "recipes"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False, index=True)
@@ -14,21 +14,20 @@ class Recipe(Base):
     description = Column(Text, nullable=False)
 
     ingredients = relationship(
-        'Ingredient',
-        back_populates='recipe',
-        cascade='all, delete-orphan',
-        lazy='selectin',
+        "Ingredient",
+        back_populates="recipe",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
 class Ingredient(Base):
-    __tablename__ = 'ingredients'
+    __tablename__ = "ingredients"
 
     id = Column(Integer, primary_key=True, index=True)
-    recipe_id = Column(Integer, ForeignKey('recipes.id'), nullable=False)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     name = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
     unit = Column(String, nullable=False)
 
-    recipe = relationship('Recipe', back_populates='ingredients')
-    
+    recipe = relationship("Recipe", back_populates="ingredients")
