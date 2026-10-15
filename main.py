@@ -1,7 +1,7 @@
-from typing import List
+from typing import AsyncGenerator, List
 
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy import select, update
+from sqlalchemy import CursorResult, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import models
@@ -15,7 +15,7 @@ app = FastAPI(
 )
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         yield session
 
@@ -41,14 +41,16 @@ async def on_shutdown() -> None:
         "при равенстве — по возрастанию времени приготовления."
     ),
 )
-async def list_recipes(session: AsyncSession = Depends(get_session)):
+async def list_recipes(
+    session: AsyncSession = Depends(get_session),
+) -> List[models.Recipe]:
     result = await session.execute(
         select(models.Recipe).order_by(
             models.Recipe.views.desc(),
             models.Recipe.cooking_time.asc(),
         )
     )
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 @app.get(
@@ -62,8 +64,8 @@ async def list_recipes(session: AsyncSession = Depends(get_session)):
 async def get_recipe(
     recipe_id: int,
     session: AsyncSession = Depends(get_session),
-):
-    result = await session.execute(
+) -> models.Recipe:
+    result: CursorResult = await session.execute(
         update(models.Recipe)
         .where(models.Recipe.id == recipe_id)
         .values(views=models.Recipe.views + 1)
@@ -88,7 +90,7 @@ async def get_recipe(
 async def create_recipe(
     payload: schemas.RecipeIn,
     session: AsyncSession = Depends(get_session),
-):
+) -> models.Recipe:
     recipe = models.Recipe(
         title=payload.title,
         cooking_time=payload.cooking_time,
