@@ -1,9 +1,10 @@
 fastapi
 uvicorn[standard]
-sqlalchemy
+sqlalchemy[asyncio]
 aiosqlite
 pydantic
 pytest
+pytest-asyncio
 httpx
 flake8
 isort
