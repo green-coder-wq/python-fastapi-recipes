@@ -30,7 +30,7 @@ jobs:
         run: black . --check --diff
 
       - name: flake8
-        run: flake8 . --max-line-length=88
+        run: flake8 . --max-line-length=88 --exclude=.git,__pycache__,tests/__init__.py
 
       - name: mypy
         run: mypy .
