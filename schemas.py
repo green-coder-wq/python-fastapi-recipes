@@ -67,3 +67,4 @@ class RecipeDetail(BaseModel):
     ingredients: List[IngredientOut] = Field(..., description='Список ингредиентов')
 
     model_config = ConfigDict(orm_mode=True)
+    
