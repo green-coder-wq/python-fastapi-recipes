@@ -1,9 +1,12 @@
-import asyncio
+from typing import AsyncGenerator, Generator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from database import Base
 from main import app, get_session
@@ -11,20 +14,15 @@ from main import app, get_session
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
 @pytest.fixture
-async def test_session():
+async def test_session() -> AsyncGenerator[AsyncSession, None]:
     engine = create_async_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    session_maker = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    session_maker = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with session_maker() as session:
         yield session
 
@@ -34,8 +32,10 @@ async def test_session():
 
 
 @pytest.fixture
-async def client(test_session):
-    async def override_get_session():
+async def client(
+    test_session: AsyncSession,
+) -> AsyncGenerator[AsyncClient, None]:
+    async def override_get_session() -> AsyncGenerator[AsyncSession, None]:
         yield test_session
 
     app.dependency_overrides[get_session] = override_get_session
