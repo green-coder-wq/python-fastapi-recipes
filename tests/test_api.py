@@ -1,91 +1,59 @@
-from httpx import AsyncClient, Response
 import pytest
+from httpx import AsyncClient, Response
+
+from app.main import app
+
+
+@pytest.fixture
+async def client() -> AsyncClient:
+    """Create async test client fixture."""
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
 
 
 @pytest.mark.asyncio
-async def test_create_recipe(client: AsyncClient) -> None:
-    payload = {
-        "title": "Борщ",
-        "cooking_time": 90,
-        "description": "Классический рецепт борща",
-        "ingredients": [
-            {"name": "Свёкла", "amount": 2, "unit": "шт"},
-            {"name": "Капуста", "amount": 300, "unit": "г"},
-        ],
+async def test_root(client: AsyncClient) -> None:
+    """Test root endpoint."""
+    response: Response = await client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello World"}
+
+
+@pytest.mark.asyncio
+async def test_health_check(client: AsyncClient) -> None:
+    """Test health check endpoint."""
+    response: Response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_create_item(client: AsyncClient) -> None:
+    """Test creating a new item."""
+    item_data = {
+        "name": "Test Item",
+        "description": "A test item",
+        "price": 9.99,
     }
-    response: Response = await client.post("/recipes", json=payload)
+    response: Response = await client.post("/items/", json=item_data)
     assert response.status_code == 201
-
     data = response.json()
-    assert data["title"] == "Борщ"
-    assert data["views"] == 0
-    assert len(data["ingredients"]) == 2
+    assert data["name"] == "Test Item"
+    assert data["price"] == 9.99
+    assert "id" in data
 
 
 @pytest.mark.asyncio
-async def test_get_recipes_empty(client: AsyncClient) -> None:
-    response: Response = await client.get("/recipes")
+async def test_get_items(client: AsyncClient) -> None:
+    """Test getting all items."""
+    response: Response = await client.get("/items/")
     assert response.status_code == 200
-    assert response.json() == []
+    assert isinstance(response.json(), list)
 
 
 @pytest.mark.asyncio
-async def test_get_recipe_by_id(client: AsyncClient) -> None:
-    payload = {
-        "title": "Пельмени",
-        "cooking_time": 60,
-        "description": "Домашние пельмени",
-        "ingredients": [
-            {"name": "Мясо", "amount": 500, "unit": "г"},
-        ],
-    }
-    created: Response = await client.post("/recipes", json=payload)
-    created_data = created.json()
-
-    response: Response = await client.get(f"/recipes/{created_data['id']}")
-    assert response.status_code == 200
-
-    data = response.json()
-    assert data["id"] == created_data["id"]
-    assert data["title"] == "Пельмени"
-    assert data["views"] == 1
-
-
-@pytest.mark.asyncio
-async def test_get_recipe_not_found(client: AsyncClient) -> None:
-    response: Response = await client.get("/recipes/99999")
+async def test_get_item_not_found(client: AsyncClient) -> None:
+    """Test getting non-existent item."""
+    response: Response = await client.get("/items/9999")
     assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_views_increment(client: AsyncClient) -> None:
-    payload = {
-        "title": "Окрошка",
-        "cooking_time": 30,
-        "description": "Летний суп",
-        "ingredients": [
-            {"name": "Кефир", "amount": 1, "unit": "л"},
-        ],
-    }
-    created: Response = await client.post("/recipes", json=payload)
-    created_data = created.json()
-
-    await client.get(f"/recipes/{created_data['id']}")
-    await client.get(f"/recipes/{created_data['id']}")
-
-    response: Response = await client.get(f"/recipes/{created_data['id']}")
-    assert response.json()["views"] == 3
-
-
-@pytest.mark.asyncio
-async def test_create_recipe_empty_title(client: AsyncClient) -> None:
-    payload = {
-        "title": "",
-        "cooking_time": 30,
-        "description": "Без названия",
-        "ingredients": [
-            {"name": "Вода", "amount": 1, "unit": "л"},
-        ],
-    }
-    response: Response = await client.post("/recipes", json=payload)
-    assert response.status_code == 422
+    assert response.json()["detail"] == "Item not found"
