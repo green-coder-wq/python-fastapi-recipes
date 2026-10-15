@@ -31,7 +31,7 @@ class IngredientIn(BaseModel):
 class IngredientOut(IngredientIn):
     id: int = Field(..., description="Идентификатор ингредиента")
 
-    model_config = ConfigDict(orm_mode=True, str_strip_whitespace=True)
+    model_config = ConfigDict(from_attributes=True, str_strip_whitespace=True)
 
 
 class RecipeIn(BaseModel):
@@ -70,7 +70,7 @@ class RecipeListItem(BaseModel):
     views: int = Field(..., description="Сколько раз открывали детальную страницу")
     cooking_time: int = Field(..., description="Время приготовления в минутах")
 
-    model_config = ConfigDict(orm_mode=True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RecipeDetail(BaseModel):
@@ -83,4 +83,4 @@ class RecipeDetail(BaseModel):
     description: str = Field(..., description="Текстовое описание приготовления")
     ingredients: List[IngredientOut] = Field(..., description="Список ингредиентов")
 
-    model_config = ConfigDict(orm_mode=True)
+    model_config = ConfigDict(from_attributes=True)
