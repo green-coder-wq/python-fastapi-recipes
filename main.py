@@ -14,6 +14,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 async def get_session() -> AsyncSession:
     async with async_session() as session:
         yield session
